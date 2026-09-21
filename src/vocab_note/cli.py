@@ -109,6 +109,11 @@ def build_parser() -> argparse.ArgumentParser:
                    choices=["en_to_ko", "ko_to_en", "both"],
                    help="en_to_ko=영어 보고 뜻 맞히기 / ko_to_en=뜻 보고 영어 맞히기 (기본: both)")
     q.add_argument("--num", type=int, default=5, help="문제 수 (기본: 5)")
+
+    st = sub.add_parser("stats", help="학습 기록 (정답률·오답노트·최근풀이)")
+    st.add_argument("--days", type=int, default=7, help="일자별 표시 일수 (기본: 7)")
+    st.add_argument("--wrong", type=int, default=10, help="오답노트 표시 수 (기본: 10)")
+    st.add_argument("--recent", type=int, default=10, help="최근 풀이 표시 수 (기본: 10)")
     return p
 
 
@@ -361,6 +366,44 @@ def main(argv: list[str] | None = None) -> None:
                     n += 1
                 print(f"\n점수: {session.score}/{n - 1} "
                       f"(남은 문제 {session.total - session.index}개)")
+            finally:
+                conn.close()
+        elif args.command == "stats":
+            from .stats_service import (
+                daily_stats,
+                direction_stats,
+                overall_stats,
+                recent_attempts,
+                wrong_notes,
+            )
+
+            conn = get_connection()
+            try:
+                o = overall_stats(conn)
+                print(f"전체: {o.correct}/{o.total} ({o.accuracy:.0%})")
+                for d in direction_stats(conn):
+                    print(f"  {d.direction}: {d.correct}/{d.total} ({d.accuracy:.0%})")
+                print("\n일자별:")
+                days = daily_stats(conn, args.days)
+                if not days:
+                    print("  (기록 없음)")
+                for day in days:
+                    print(f"  {day.day}: {day.correct}/{day.total} ({day.accuracy:.0%})")
+                print("\n오답 노트:")
+                wrongs = wrong_notes(conn, args.wrong)
+                if not wrongs:
+                    print("  (오답 없음 — 완벽합니다!)")
+                for s in wrongs:
+                    print(f"  {s.spelling} ({s.meaning_ko}): "
+                          f"오답 {s.wrong}회, 정답률 {s.accuracy:.0%}")
+                print("\n최근 풀이:")
+                recents = recent_attempts(conn, args.recent)
+                if not recents:
+                    print("  (기록 없음)")
+                for r in recents:
+                    mark = "O" if r.is_correct else "X"
+                    print(f"  [{mark}] {r.answered_at} {r.spelling} "
+                          f"({r.meaning_ko}) [{r.direction}]")
             finally:
                 conn.close()
     except (VocabError, WordNotFoundError, SenseNotFoundError, TagError) as e:

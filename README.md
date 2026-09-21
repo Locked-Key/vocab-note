@@ -1,6 +1,6 @@
 # vocab-note — 영단어 학습 노트
 
-5단계 퀴즈 상태입니다.
+6단계 학습 기록 상태입니다.
 
 ## 구조 (코드/데이터 분리)
 
@@ -58,6 +58,10 @@ python -m vocab_note quiz
 python -m vocab_note quiz --tag 과일 --direction en_to_ko --num 5
 python -m vocab_note quiz --direction ko_to_en
 
+# 학습 기록 (6단계: quiz_attempt 집계)
+python -m vocab_note stats
+python -m vocab_note stats --days 7 --wrong 10 --recent 10
+
 # 4) 테스트
 pytest -q
 ```
@@ -105,3 +109,9 @@ pytest -q
 - [x] 상태 관리 (`QuizSession`: 현재 문제·점수·풀이 결과)
 - [x] 단위 테스트 기초 (`seed` 고정으로 랜덤 로직 검증)
 - [x] 문제 생성 로직의 UI 독립 (같은 서비스를 CLI·GUI가 공유)
+
+## 배운 내용 체크 (6단계)
+
+- [x] 날짜 처리 (`answered_at` UTC 문자열 → `substr` 일자 집계)
+- [x] 집계 SQL (`COUNT/SUM/GROUP BY/HAVING` 역할의 파이썬 정렬)
+- [x] 간단한 통계 (전체·방향별·일자별 정답률, 오답 많은 순, 최신순)
