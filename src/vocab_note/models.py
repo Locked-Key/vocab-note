@@ -1,4 +1,4 @@
-"""Word/Sense 데이터 클래스. Word와 Sense 분리로 동음이의어를 지원합니다."""
+"""Word/Sense/Tag 데이터 클래스. Word와 Sense 분리로 동음이의어를 지원합니다."""
 
 from __future__ import annotations
 
@@ -16,9 +16,16 @@ class Sense:
 
 
 @dataclass
+class Tag:
+    id: int
+    name: str
+
+
+@dataclass
 class Word:
     id: int
     spelling: str
     normalized_spelling: str
     created_at: str = ""
     senses: list[Sense] = field(default_factory=list)
+    tags: list[Tag] = field(default_factory=list)

@@ -1,6 +1,6 @@
 # vocab-note — 영단어 학습 노트
 
-2단계 중복 검사 상태입니다.
+3단계 태그·목록 상태입니다.
 
 ## 구조 (코드/데이터 분리)
 
@@ -40,6 +40,15 @@ python -m vocab_note add "  APPLE " --pos noun --meaning 둑
 python -m vocab_note add "  APPLE " --pos noun --meaning 둑 --add-sense
 # → 바로 기존 단어에 뜻 추가 (단어 행은 1개 유지)
 
+# 태그·검색·정렬 (3단계: 다대다)
+python -m vocab_note tag 과일
+python -m vocab_note tag-word apple 과일
+python -m vocab_note tags
+python -m vocab_note list --tag 과일
+python -m vocab_note list --search 사과
+python -m vocab_note list --order recent
+python -m vocab_note untag-word apple 과일
+
 # 4) 테스트
 pytest -q
 ```
@@ -65,3 +74,10 @@ pytest -q
 - [x] 문자열 처리 (`strip/lower/정규식 공백 정리` → `normalize_spelling`)
 - [x] 데이터 검증 (빈 철자·빈 뜻 거부 → `VocabError`)
 - [x] 중복 UX (경고 + 기존 뜻 표시 + `--add-sense`/대화형 선택)
+
+## 배운 내용 체크 (3단계)
+
+- [x] 다대다 관계 (`word_tag` 조인 테이블, `INSERT OR IGNORE`, `ON DELETE CASCADE`)
+- [x] SQL 조인 (`JOIN word_tag/tag`, `LEFT JOIN` + `GROUP BY`로 태그별 개수)
+- [x] 검색 조건 (철자·뜻 `LIKE`, 태그 필터 `COLLATE NOCASE`, `alpha/recent` 정렬)
+- [x] 리스트/딕셔너리 (결과를 `Word(senses, tags)` 객체 리스트로 조립)
