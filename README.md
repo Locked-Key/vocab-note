@@ -1,6 +1,6 @@
 # vocab-note — 영단어 학습 노트
 
-4단계 데스크톱 UI 상태입니다.
+5단계 퀴즈 상태입니다.
 
 ## 구조 (코드/데이터 분리)
 
@@ -53,6 +53,11 @@ python -m vocab_note untag-word apple 과일
 python -m vocab_note gui
 # 또는 VS Code에서 F5 → "Vocab GUI"
 
+# 퀴즈 (5단계: 객관식, 풀이는 quiz_attempt에 저장)
+python -m vocab_note quiz
+python -m vocab_note quiz --tag 과일 --direction en_to_ko --num 5
+python -m vocab_note quiz --direction ko_to_en
+
 # 4) 테스트
 pytest -q
 ```
@@ -93,3 +98,10 @@ pytest -q
 - [x] 레이아웃 (`QSplitter` 좌우 분할 + `QVBox/QHBox`)
 - [x] UI-로직 분리 (화면은 서비스 함수만 호출, SQL 없음 — `test_ui_has_no_sql`)
 - [x] 다크 모드 (체크박스 토글 + QSS, `ui/theme.py`)
+
+## 배운 내용 체크 (5단계)
+
+- [x] `random` (셔플·샘플·`seed` 재현 — `quiz_service.py`)
+- [x] 상태 관리 (`QuizSession`: 현재 문제·점수·풀이 결과)
+- [x] 단위 테스트 기초 (`seed` 고정으로 랜덤 로직 검증)
+- [x] 문제 생성 로직의 UI 독립 (같은 서비스를 CLI·GUI가 공유)

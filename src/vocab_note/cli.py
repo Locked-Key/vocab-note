@@ -102,6 +102,13 @@ def build_parser() -> argparse.ArgumentParser:
     uw.add_argument("name", help="태그명")
 
     sub.add_parser("gui", help="데스크톱 UI 실행 (PySide6)")
+
+    q = sub.add_parser("quiz", help="퀴즈 풀기 (객관식)")
+    q.add_argument("--tag", default="", help="출제 범위 태그 (예: --tag 과일)")
+    q.add_argument("--direction", default="both",
+                   choices=["en_to_ko", "ko_to_en", "both"],
+                   help="en_to_ko=영어 보고 뜻 맞히기 / ko_to_en=뜻 보고 영어 맞히기 (기본: both)")
+    q.add_argument("--num", type=int, default=5, help="문제 수 (기본: 5)")
     return p
 
 
@@ -318,6 +325,44 @@ def main(argv: list[str] | None = None) -> None:
                 print("PySide6이 없습니다. `pip install -r requirements.txt`를 실행하세요.")
                 return
             raise SystemExit(run())
+        elif args.command == "quiz":
+            from .quiz_service import QuizError, QuizSession, build_quiz, record_attempt
+
+            conn = get_connection()
+            try:
+                try:
+                    questions = build_quiz(
+                        conn, args.tag, args.direction, args.num)
+                except QuizError as e:
+                    print(f"출제 불가: {e}")
+                    return
+                session = QuizSession(questions)
+                n = 1
+                while not session.done:
+                    q = session.current
+                    arrow = "뜻은?" if q.direction == "en_to_ko" else "영어는?"
+                    print(f"\n[{n}/{session.total}] {q.prompt} — {arrow}")
+                    for i, opt in enumerate(q.options, 1):
+                        print(f"  {i}. {opt}")
+                    try:
+                        raw = input(f"번호 (1-{len(q.options)}, q=종료): ").strip()
+                    except EOFError:
+                        print("\n종료")
+                        break
+                    if raw.lower() == "q":
+                        break
+                    if not raw.isdigit() or not 1 <= int(raw) <= len(q.options):
+                        print(f"1~{len(q.options)} 번호를 입력하세요.")
+                        continue
+                    picked = q.options[int(raw) - 1]
+                    correct = session.answer_current(picked)
+                    record_attempt(conn, q.sense_id, q.direction, correct)
+                    print("정답!" if correct else f"오답. 정답: {q.answer}")
+                    n += 1
+                print(f"\n점수: {session.score}/{n - 1} "
+                      f"(남은 문제 {session.total - session.index}개)")
+            finally:
+                conn.close()
     except (VocabError, WordNotFoundError, SenseNotFoundError, TagError) as e:
         print(f"오류: {e}")
 
