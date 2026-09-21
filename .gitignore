@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Data (코드와 데이터 분리: DB/백업은 커밋하지 않음)
+data/*.db
+data/*.db-journal
+data/backups/
+.env
+
+# OS / IDE
+.vscode/*
+!.vscode/launch.json
+!.vscode/settings.json
+.idea/
+.DS_Store
+Thumbs.db
+
+# Build
+dist/
+build/
+*.spec
