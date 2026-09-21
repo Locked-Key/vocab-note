@@ -84,3 +84,66 @@ def test_ui_has_no_sql():
         )
     ]
     assert hits == []
+
+
+def _quiz_seed(db_path):
+    from vocab_note.db import get_connection
+    from vocab_note.tag_service import tag_word
+    from vocab_note.vocab_service import add_sense, add_word
+
+    init_db(db_path)
+    conn = get_connection(db_path)
+    try:
+        for spelling, meaning in [("apple", "사과"), ("banana", "바나나"),
+                                  ("grape", "포도"), ("peach", "복숭아")]:
+            w = add_word(conn, spelling)
+            add_sense(conn, w.id, "noun", meaning)
+            tag_word(conn, w.id, "과일")
+    finally:
+        conn.close()
+
+
+def test_main_window_has_quiz_button(tmp_path):
+    win = _window(tmp_path)
+    assert win.quiz_btn.text() == "퀴즈"
+
+
+def test_quiz_dialog_full_flow(tmp_path):
+    from vocab_note.db import get_connection
+    from vocab_note.ui.quiz_dialog import QuizDialog
+
+    QApplication.instance() or QApplication([])
+    db_path = tmp_path / "q.db"
+    _quiz_seed(db_path)
+
+    dlg = QuizDialog(db_path=db_path)
+    assert dlg.pages.currentIndex() == 0
+    assert dlg.start("전체 태그", "both", 2, seed=11) is True
+    assert dlg.pages.currentIndex() == 1
+    assert dlg.session.total == 2
+
+    # 1번 문제: 정답 버튼 클릭
+    q1 = dlg.session.current
+    [b for b in dlg.option_buttons if b.text() == q1.answer][0].click()
+    assert "정답" in dlg.feedback.text()
+    assert dlg.next_btn.isEnabled()
+    dlg.next_btn.click()
+
+    # 2번 문제: 오답 버튼 클릭
+    q2 = dlg.session.current
+    wrong = [b for b in dlg.option_buttons if b.text() != q2.answer][0]
+    wrong.click()
+    assert "오답" in dlg.feedback.text()
+    dlg.next_btn.click()
+
+    assert dlg.pages.currentIndex() == 2
+    assert dlg.score_label.text() == "점수: 1/2"
+    assert dlg.review.count() == 2
+
+    # 풀이 2건이 DB에 기록됐는지
+    conn = get_connection(db_path)
+    try:
+        n = conn.execute("SELECT COUNT(*) c FROM quiz_attempt").fetchone()["c"]
+        assert n == 2
+    finally:
+        conn.close()

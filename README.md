@@ -49,9 +49,10 @@ python -m vocab_note list --search 사과
 python -m vocab_note list --order recent
 python -m vocab_note untag-word apple 과일
 
-# 데스크톱 UI (4단계)
+# 데스크톱 UI (4단계 + GUI 퀴즈)
 python -m vocab_note gui
 # 또는 VS Code에서 F5 → "Vocab GUI"
+# 상단 [퀴즈] 버튼: 태그 범위·방향·문제 수 선택 → 객관식 풀이 → 결과
 
 # 퀴즈 (5단계: 객관식, 풀이는 quiz_attempt에 저장)
 python -m vocab_note quiz

@@ -37,6 +37,7 @@ from ..vocab_service import (
     update_sense,
 )
 from .dialogs import SenseDialog, WordDialog
+from .quiz_dialog import QuizDialog
 from .theme import apply_theme
 
 ALL_TAGS = "전체 태그"
@@ -136,11 +137,14 @@ class MainWindow(QMainWindow):
         splitter.setStretchFactor(0, 1)
         splitter.setStretchFactor(1, 2)
 
-        # 상단: 다크모드 토글
+        # 상단: 퀴즈 + 다크모드 토글
+        self.quiz_btn = QPushButton("퀴즈")
+        self.quiz_btn.clicked.connect(self.open_quiz)
         self.dark_toggle = QCheckBox("다크 모드")
         self.dark_toggle.toggled.connect(self.on_toggle_dark)
         top = QHBoxLayout()
         top.addStretch(1)
+        top.addWidget(self.quiz_btn)
         top.addWidget(self.dark_toggle)
 
         root = QVBoxLayout()
@@ -445,3 +449,6 @@ class MainWindow(QMainWindow):
         app = QApplication.instance()
         if app is not None:
             apply_theme(app, checked)
+
+    def open_quiz(self) -> None:
+        QuizDialog(self, self._db_path).exec()
