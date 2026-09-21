@@ -1,6 +1,6 @@
 # vocab-note — 영단어 학습 노트
 
-1단계 단어장 핵심 CRUD 상태입니다.
+2단계 중복 검사 상태입니다.
 
 ## 구조 (코드/데이터 분리)
 
@@ -33,6 +33,13 @@ python -m vocab_note rename apple apple2
 python -m vocab_note del-sense 3
 python -m vocab_note del-word bank --yes
 
+# 중복 검사 (2단계: 대소문자·공백 무시)
+python -m vocab_note add apple --pos noun --meaning 사과
+python -m vocab_note add "  APPLE " --pos noun --meaning 둑
+# → 중복 경고 + 기존 뜻 출력 + 대화형 선택 (y면 뜻으로 추가)
+python -m vocab_note add "  APPLE " --pos noun --meaning 둑 --add-sense
+# → 바로 기존 단어에 뜻 추가 (단어 행은 1개 유지)
+
 # 4) 테스트
 pytest -q
 ```
@@ -51,3 +58,10 @@ pytest -q
 - [x] Python 클래스 (`models.py`의 `@dataclass`), 함수, 예외 (`VocabError/DuplicateWordError/...`)
 - [x] SQLite 기초 (`INSERT/SELECT/UPDATE/DELETE`, `ON DELETE CASCADE`)
 - [x] UI/로직 분리 (`cli.py`는 출력만, `vocab_service.py`는 DB 로직만)
+
+## 배운 내용 체크 (2단계)
+
+- [x] `normalized_spelling` (소문자·공백 정리) + `UNIQUE`로 중복 방지
+- [x] 문자열 처리 (`strip/lower/정규식 공백 정리` → `normalize_spelling`)
+- [x] 데이터 검증 (빈 철자·빈 뜻 거부 → `VocabError`)
+- [x] 중복 UX (경고 + 기존 뜻 표시 + `--add-sense`/대화형 선택)

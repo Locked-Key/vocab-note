@@ -89,6 +89,18 @@ def get_word_by_spelling(conn: sqlite3.Connection, spelling: str) -> Word | None
     return get_word(conn, row["id"])
 
 
+def find_duplicate(conn: sqlite3.Connection, spelling: str) -> Word | None:
+    """2단계: 철자 기준 중복 조회.
+
+    `normalized_spelling`(소문자·공백 정리)에 UNIQUE가 걸려 있어
+    "Apple" / " apple " / "APPLE"은 모두 같은 단어로 취급됩니다.
+    중복이면 기존 Word(뜻 포함), 없으면 None.
+    """
+    if not spelling or not spelling.strip():
+        return None
+    return get_word_by_spelling(conn, spelling)
+
+
 def list_words(conn: sqlite3.Connection) -> list[Word]:
     rows = conn.execute("SELECT * FROM word ORDER BY normalized_spelling").fetchall()
     return [

@@ -1,8 +1,9 @@
-"""CLI 진입점. 1단계: Word/Sense CRUD."""
+"""CLI 진입점. 2단계: 중복 경고 + 기존 단어에 뜻 추가 선택."""
 
 from __future__ import annotations
 
 import argparse
+import sys
 
 from . import __version__
 from .config import DB_PATH
@@ -16,6 +17,7 @@ from .vocab_service import (
     add_word,
     delete_sense,
     delete_word,
+    find_duplicate,
     get_word,
     get_word_by_spelling,
     list_words,
@@ -32,12 +34,17 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser("init", help="data/vocab.db 생성 (테이블 초기화)")
     sub.add_parser("info", help="DB 경로와 테이블 목록 출력")
 
-    a = sub.add_parser("add", help="단어 + 첫 뜻 등록")
+    a = sub.add_parser("add", help="단어 + 첫 뜻 등록 (중복이면 경고)")
     a.add_argument("spelling", help="영어 철자 (예: apple)")
     a.add_argument("--pos", default="", help="품사 (예: noun)")
     a.add_argument("--meaning", required=True, help="한국어 뜻 (예: 사과)")
     a.add_argument("--ex-en", default="", help="영어 예문")
     a.add_argument("--ex-ko", default="", help="예문 해석")
+    a.add_argument(
+        "--add-sense",
+        action="store_true",
+        help="중복이면 기존 단어에 다른 뜻으로 바로 추가",
+    )
 
     sub.add_parser("list", help="단어 목록 (뜻 포함)")
 
@@ -112,11 +119,42 @@ def main(argv: list[str] | None = None) -> None:
         elif args.command == "add":
             conn = get_connection()
             try:
+                # 2단계: 먼저 중복(대소문자·공백 무시)을 확인하고 경고
+                existing = find_duplicate(conn, args.spelling)
+                if existing is not None:
+                    print(f"중복 경고: '{args.spelling.strip()}'은(는) 이미 등록됨")
+                    _print_word_detail(conn, str(existing.id))
+                    if args.add_sense:
+                        sense = add_sense(
+                            conn,
+                            existing.id,
+                            args.pos,
+                            args.meaning,
+                            args.ex_en,
+                            args.ex_ko,
+                        )
+                        print(f"추가: [{existing.spelling}] sense {sense.id} ({sense.meaning_ko})")
+                        return
+                    if sys.stdin.isatty():
+                        ok = input("기존 단어에 다른 뜻으로 추가할까요? (y/N) ")
+                        if ok.strip().lower() == "y":
+                            sense = add_sense(
+                                conn,
+                                existing.id,
+                                args.pos,
+                                args.meaning,
+                                args.ex_en,
+                                args.ex_ko,
+                            )
+                            print(f"추가: [{existing.spelling}] sense {sense.id} ({sense.meaning_ko})")
+                            return
+                    print("취소됨. 다른 뜻이면 `--add-sense`를 붙이거나 `add-sense`를 쓰세요.")
+                    print(f"예: vocab-note add {args.spelling.strip()} --meaning {args.meaning} --add-sense")
+                    return
                 try:
                     word = add_word(conn, args.spelling)
-                except DuplicateWordError as e:
+                except DuplicateWordError as e:  # 레이스 등 DB UNIQUE 충돌 시
                     print(f"중복: {e}")
-                    print("다른 뜻이면 `add-sense`로 추가하세요.")
                     return
                 sense = add_sense(
                     conn, word.id, args.pos, args.meaning, args.ex_en, args.ex_ko
