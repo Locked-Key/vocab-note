@@ -100,6 +100,8 @@ def build_parser() -> argparse.ArgumentParser:
     uw = sub.add_parser("untag-word", help="단어에서 태그 떼기")
     uw.add_argument("key", help="word id 또는 철자")
     uw.add_argument("name", help="태그명")
+
+    sub.add_parser("gui", help="데스크톱 UI 실행 (PySide6)")
     return p
 
 
@@ -309,6 +311,13 @@ def main(argv: list[str] | None = None) -> None:
                 print(f"태그 제거: [{word.spelling}] #{args.name.strip()}")
             finally:
                 conn.close()
+        elif args.command == "gui":
+            try:
+                from .ui.app import run
+            except ImportError:
+                print("PySide6이 없습니다. `pip install -r requirements.txt`를 실행하세요.")
+                return
+            raise SystemExit(run())
     except (VocabError, WordNotFoundError, SenseNotFoundError, TagError) as e:
         print(f"오류: {e}")
 

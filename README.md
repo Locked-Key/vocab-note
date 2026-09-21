@@ -1,6 +1,6 @@
 # vocab-note — 영단어 학습 노트
 
-3단계 태그·목록 상태입니다.
+4단계 데스크톱 UI 상태입니다.
 
 ## 구조 (코드/데이터 분리)
 
@@ -49,6 +49,10 @@ python -m vocab_note list --search 사과
 python -m vocab_note list --order recent
 python -m vocab_note untag-word apple 과일
 
+# 데스크톱 UI (4단계)
+python -m vocab_note gui
+# 또는 VS Code에서 F5 → "Vocab GUI"
+
 # 4) 테스트
 pytest -q
 ```
@@ -81,3 +85,11 @@ pytest -q
 - [x] SQL 조인 (`JOIN word_tag/tag`, `LEFT JOIN` + `GROUP BY`로 태그별 개수)
 - [x] 검색 조건 (철자·뜻 `LIKE`, 태그 필터 `COLLATE NOCASE`, `alpha/recent` 정렬)
 - [x] 리스트/딕셔너리 (결과를 `Word(senses, tags)` 객체 리스트로 조립)
+
+## 배운 내용 체크 (4단계)
+
+- [x] PySide6 위젯 (`QListWidget/QLineEdit/QComboBox/QDialog`, `ui/` 패키지)
+- [x] Signal/Slot (`textChanged/currentTextChanged/currentItemChanged/toggled`)
+- [x] 레이아웃 (`QSplitter` 좌우 분할 + `QVBox/QHBox`)
+- [x] UI-로직 분리 (화면은 서비스 함수만 호출, SQL 없음 — `test_ui_has_no_sql`)
+- [x] 다크 모드 (체크박스 토글 + QSS, `ui/theme.py`)
