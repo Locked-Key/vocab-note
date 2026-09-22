@@ -147,3 +147,29 @@ def test_quiz_dialog_full_flow(tmp_path):
         assert n == 2
     finally:
         conn.close()
+
+
+def test_dialog_accept_code_regression():
+    """회귀: dlg.Accepted(인스턴스 접근)는 PySide6에서 AttributeError.
+    QDialog.DialogCode.Accepted(클래스 접근)를 써야 함."""
+    from PySide6.QtWidgets import QDialog
+
+    from vocab_note.ui.dialogs import SenseDialog, WordDialog
+
+    QApplication.instance() or QApplication([])
+    assert QDialog.DialogCode.Accepted is not None
+
+    dlg = WordDialog()
+    dlg.spelling.setText("apple")
+    dlg.meaning.setText("사과")
+    dlg.tags.setText("과일, 토익")
+    dlg._on_ok()  # OK 버튼과 같은 경로 (메시지박스 없이 accept)
+    assert dlg.result() == QDialog.DialogCode.Accepted
+    assert dlg.data() == {
+        "spelling": "apple", "pos": "", "meaning": "사과",
+        "ex_en": "", "ex_ko": "", "tags": ["과일", "토익"],
+    }
+
+    sense = SenseDialog(initial={"meaning_ko": "사과"})
+    sense._on_ok()
+    assert sense.result() == QDialog.DialogCode.Accepted

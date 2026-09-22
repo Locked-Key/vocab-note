@@ -9,6 +9,7 @@ from PySide6.QtWidgets import (
     QApplication,
     QCheckBox,
     QComboBox,
+    QDialog,
     QHBoxLayout,
     QInputDialog,
     QLabel,
@@ -274,7 +275,7 @@ class MainWindow(QMainWindow):
     # -- 액션 ------------------------------------------------------------
     def on_add_word(self) -> None:
         dlg = WordDialog(self)
-        if dlg.exec() != dlg.Accepted:
+        if dlg.exec() != QDialog.DialogCode.Accepted:
             return
         d = dlg.data()
         conn = self._conn()
@@ -341,7 +342,7 @@ class MainWindow(QMainWindow):
             QMessageBox.information(self, "안내", "먼저 단어를 선택하세요.")
             return
         dlg = SenseDialog(self)
-        if dlg.exec() != dlg.Accepted:
+        if dlg.exec() != QDialog.DialogCode.Accepted:
             return
         d = dlg.data()
         conn = self._conn()
@@ -368,7 +369,7 @@ class MainWindow(QMainWindow):
             "part_of_speech": s.part_of_speech, "meaning_ko": s.meaning_ko,
             "example_en": s.example_en, "example_ko": s.example_ko,
         })
-        if dlg.exec() != dlg.Accepted:
+        if dlg.exec() != QDialog.DialogCode.Accepted:
             return
         d = dlg.data()
         conn = self._conn()
