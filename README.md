@@ -142,8 +142,8 @@ erDiagram
         TEXT name UK
     }
     word_tag {
-        INTEGER word_id PK_FK "CASCADE"
-        INTEGER tag_id PK_FK "CASCADE"
+        INTEGER word_id PK, FK "CASCADE"
+        INTEGER tag_id PK, FK "CASCADE"
     }
     quiz_attempt {
         INTEGER id PK
