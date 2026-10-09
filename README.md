@@ -1,6 +1,6 @@
 # vocab-note — 영단어 학습 노트
 
-6단계 학습 기록 상태입니다.
+7단계 AI 보조 상태입니다.
 
 ## 구조 (코드/데이터 분리)
 
@@ -62,6 +62,15 @@ python -m vocab_note quiz --direction ko_to_en
 # 학습 기록 (6단계: quiz_attempt 집계)
 python -m vocab_note stats
 python -m vocab_note stats --days 7 --wrong 10 --recent 10
+
+# AI 보조 (7단계: Gemini 기본, 키 없으면 Mock)
+python -m vocab_note suggest apple              # 제안만 표시
+python -m vocab_note suggest apple --save       # 확인 후 저장
+python -m vocab_note ask apple "다른 뜻도 있어?"
+python -m vocab_note examples apple --num 3
+python -m vocab_note config --provider gemini --key <키>  # .env에 저장
+python -m vocab_note config --test              # 연결 테스트
+# GUI: 단어 추가 [AI 추천받기], 상단 [AI에게 질문]·[설정]
 
 # 4) 테스트
 pytest -q
@@ -198,3 +207,10 @@ erDiagram
 - [x] 날짜 처리 (`answered_at` UTC 문자열 → `substr` 일자 집계)
 - [x] 집계 SQL (`COUNT/SUM/GROUP BY/HAVING` 역할의 파이썬 정렬)
 - [x] 간단한 통계 (전체·방향별·일자별 정답률, 오답 많은 순, 최신순)
+
+## 배운 내용 체크 (7단계)
+
+- [x] Provider 추상화 (같은 `complete()` 인터페이스에 Gemini/OpenAI/Anthropic/Mock)
+- [x] API 호출 (`urllib`, 환경 변수, JSON, 업체별 인증·요청·응답 차이 흡수)
+- [x] 프롬프트 설계 (JSON 한 객체로만 답하게 + 코드펜스·잡음 파싱)
+- [x] 비용·오류 처리 (`AIError` 공통 변환, 키 없음 → Mock, 제안-저장 분리)

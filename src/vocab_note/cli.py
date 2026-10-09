@@ -114,7 +114,36 @@ def build_parser() -> argparse.ArgumentParser:
     st.add_argument("--days", type=int, default=7, help="일자별 표시 일수 (기본: 7)")
     st.add_argument("--wrong", type=int, default=10, help="오답노트 표시 수 (기본: 10)")
     st.add_argument("--recent", type=int, default=10, help="최근 풀이 표시 수 (기본: 10)")
+
+    sg = sub.add_parser("suggest", help="AI 추천 (뜻·품사·예문·태그, 저장 안 함)")
+    sg.add_argument("spelling", help="영어 철자")
+    sg.add_argument("--save", action="store_true", help="제안을 확인 후 저장")
+
+    ak = sub.add_parser("ask", help="AI에게 단어 질문")
+    ak.add_argument("key", help="word id 또는 철자")
+    ak.add_argument("question", help="질문 (예: bank와 shore의 차이?)")
+
+    ex = sub.add_parser("examples", help="AI 예문 검색")
+    ex.add_argument("key", help="word id 또는 철자")
+    ex.add_argument("--num", type=int, default=3, help="예문 수 (기본: 3)")
+
+    cf = sub.add_parser("config", help="AI 설정 (provider·모델·키·연결 테스트)")
+    cf.add_argument("--provider", choices=["gemini", "openai", "anthropic"],
+                    help="사용할 LLM")
+    cf.add_argument("--model", help="모델명 (비우면 업체 기본값)")
+    cf.add_argument("--key", help="API 키 (.env에 저장, 화면에 표시 안 함)")
+    cf.add_argument("--test", action="store_true", help="연결 테스트")
     return p
+
+
+def _key_in_dotenv(env_var: str) -> bool:
+    """get_provider를 호출하지 않고 .env 파일의 키 존재 여부만 확인."""
+    from .ai.service import DOTENV_PATH
+
+    if not env_var or not DOTENV_PATH.exists():
+        return False
+    return any(line.strip().startswith(env_var + "=")
+               for line in DOTENV_PATH.read_text(encoding="utf-8").splitlines())
 
 
 def _resolve_word(conn, key: str):
@@ -406,6 +435,104 @@ def main(argv: list[str] | None = None) -> None:
                           f"({r.meaning_ko}) [{r.direction}]")
             finally:
                 conn.close()
+        elif args.command == "suggest":
+            from .ai.service import get_provider, load_settings, suggest_word
+
+            provider = get_provider()
+            tag = " (Mock — 키 없음)" if load_settings().is_mock else ""
+            try:
+                s = suggest_word(provider, args.spelling)
+            except Exception as e:
+                print(f"AI 오류: {e}")
+                return
+            pos = f"({s.part_of_speech}) " if s.part_of_speech else ""
+            print(f"AI 제안{tag}: {args.spelling.strip()} — {pos}{s.meaning_ko}")
+            if s.example_en:
+                print(f"  ex: {s.example_en}")
+            if s.example_ko:
+                print(f"      {s.example_ko}")
+            if s.tags:
+                print(f"  태그: {', '.join(s.tags)}")
+            if args.save:
+                if not s.meaning_ko:
+                    print("뜻이 없어 저장하지 않습니다.")
+                    return
+                conn = get_connection()
+                try:
+                    word = find_duplicate(conn, args.spelling)
+                    if word is None:
+                        word = add_word(conn, args.spelling)
+                    sense = add_sense(conn, word.id, s.part_of_speech,
+                                      s.meaning_ko, s.example_en, s.example_ko)
+                    for name in s.tags:
+                        tag_word(conn, word.id, name)
+                    print(f"저장: [{word.spelling}] sense {sense.id}")
+                finally:
+                    conn.close()
+            else:
+                print("저장하려면 --save를 붙이세요.")
+        elif args.command == "ask":
+            from .ai.service import ask_about_word, get_provider
+
+            conn = get_connection()
+            try:
+                word = _resolve_word(conn, args.key)
+                try:
+                    print(ask_about_word(
+                        conn, get_provider(), word.id, args.question))
+                except Exception as e:
+                    print(f"AI 오류: {e}")
+            finally:
+                conn.close()
+        elif args.command == "examples":
+            from .ai.service import get_provider, suggest_examples
+
+            conn = get_connection()
+            try:
+                word = _resolve_word(conn, args.key)
+                meaning = word.senses[0].meaning_ko if word.senses else ""
+                try:
+                    pairs = suggest_examples(
+                        get_provider(), word.spelling, meaning, args.num)
+                except Exception as e:
+                    print(f"AI 오류: {e}")
+                    return
+                for i, (en, ko) in enumerate(pairs, 1):
+                    print(f"{i}. {en}\n   {ko}")
+            finally:
+                conn.close()
+        elif args.command == "config":
+            import os
+
+            from .ai.providers import KEY_ENV_VARS
+            from .ai.service import (
+                get_provider,
+                load_settings,
+                save_key_to_dotenv,
+                save_settings,
+            )
+
+            s = load_settings()
+            changed = False
+            if args.provider:
+                s.provider, s.model, changed = args.provider, "", True
+            if args.model is not None:
+                s.model, changed = args.model, True
+            if changed:
+                save_settings(s)
+            if args.key:
+                save_key_to_dotenv(s.provider, args.key)
+                print("키 저장됨 (.env)")
+            s = load_settings()
+            env_var = KEY_ENV_VARS.get(s.provider, "")
+            has_key = bool(os.environ.get(env_var)) or _key_in_dotenv(env_var)
+            print(f"provider: {s.provider} / model: {s.effective_model} "
+                  f"/ 키: {'있음' if has_key else '없음(Mock)'}")
+            if args.test:
+                try:
+                    print(get_provider(s).test_connection())
+                except Exception as e:
+                    print(f"연결 실패: {e}")
     except (VocabError, WordNotFoundError, SenseNotFoundError, TagError) as e:
         print(f"오류: {e}")
 

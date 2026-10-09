@@ -138,14 +138,20 @@ class MainWindow(QMainWindow):
         splitter.setStretchFactor(0, 1)
         splitter.setStretchFactor(1, 2)
 
-        # 상단: 퀴즈 + 다크모드 토글
+        # 상단: 퀴즈 + AI + 다크모드 토글
         self.quiz_btn = QPushButton("퀴즈")
         self.quiz_btn.clicked.connect(self.open_quiz)
+        self.ai_ask_btn = QPushButton("AI에게 질문")
+        self.ai_ask_btn.clicked.connect(self.on_ai_ask)
+        self.settings_btn = QPushButton("설정")
+        self.settings_btn.clicked.connect(self.open_settings)
         self.dark_toggle = QCheckBox("다크 모드")
         self.dark_toggle.toggled.connect(self.on_toggle_dark)
         top = QHBoxLayout()
         top.addStretch(1)
         top.addWidget(self.quiz_btn)
+        top.addWidget(self.ai_ask_btn)
+        top.addWidget(self.settings_btn)
         top.addWidget(self.dark_toggle)
 
         root = QVBoxLayout()
@@ -453,3 +459,35 @@ class MainWindow(QMainWindow):
 
     def open_quiz(self) -> None:
         QuizDialog(self, self._db_path).exec()
+
+    def open_settings(self) -> None:
+        from .settings_dialog import SettingsDialog
+
+        SettingsDialog(self).exec()
+
+    def on_ai_ask(self) -> None:
+        from PySide6.QtWidgets import QApplication
+
+        from ..ai.service import ask_about_word, get_provider
+        from .dialogs import AnswerDialog
+
+        word_id = self._current_word_id()
+        if word_id is None:
+            QMessageBox.information(self, "안내", "먼저 단어를 선택하세요.")
+            return
+        question, ok = QInputDialog.getText(self, "AI에게 질문", "질문:")
+        if not ok or not question.strip():
+            return
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+        try:
+            conn = self._conn()
+            try:
+                answer = ask_about_word(conn, get_provider(), word_id, question)
+            finally:
+                conn.close()
+        except Exception as e:
+            QMessageBox.warning(self, "AI 오류", str(e))
+            return
+        finally:
+            QApplication.restoreOverrideCursor()
+        AnswerDialog(self, "AI 답변", answer).exec()

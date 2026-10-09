@@ -1,11 +1,14 @@
 """입력 다이얼로그. 검증(빈 값 거부)만 하고 저장은 호출자(MainWindow)가 합니다."""
 
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QDialog,
     QDialogButtonBox,
     QFormLayout,
     QLineEdit,
     QMessageBox,
+    QPushButton,
+    QTextEdit,
     QVBoxLayout,
 )
 
@@ -26,7 +29,6 @@ class WordDialog(QDialog):
         self.ex_ko = QLineEdit()
         self.tags = QLineEdit()
         self.tags.setPlaceholderText("과일, 토익 (쉼표 구분)")
-
         form = QFormLayout()
         form.addRow("영어*", self.spelling)
         form.addRow("품사", self.pos)
@@ -39,10 +41,43 @@ class WordDialog(QDialog):
         buttons.accepted.connect(self._on_ok)
         buttons.rejected.connect(self.reject)
 
+        ai_btn = QPushButton("AI 추천받기")
+        ai_btn.setToolTip("AI 제안을 폼에 채웁니다 (저장은 확인 버튼)")
+        ai_btn.clicked.connect(self._on_ai_suggest)
+
         layout = QVBoxLayout()
         layout.addLayout(form)
+        layout.addWidget(ai_btn)
         layout.addWidget(buttons)
         self.setLayout(layout)
+
+    def _on_ai_suggest(self) -> None:
+        from PySide6.QtWidgets import QApplication
+
+        from ..ai.service import get_provider, suggest_word
+
+        spelling = self.spelling.text().strip()
+        if not spelling:
+            QMessageBox.warning(self, "입력 오류", "먼저 영어를 입력하세요.")
+            return
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+        try:
+            s = suggest_word(get_provider(), spelling)
+        except Exception as e:
+            QMessageBox.warning(self, "AI 오류", str(e))
+            return
+        finally:
+            QApplication.restoreOverrideCursor()
+        if s.part_of_speech:
+            self.pos.setText(s.part_of_speech)
+        if s.meaning_ko:
+            self.meaning.setText(s.meaning_ko)
+        if s.example_en:
+            self.ex_en.setText(s.example_en)
+        if s.example_ko:
+            self.ex_ko.setText(s.example_ko)
+        if s.tags:
+            self.tags.setText(", ".join(s.tags))
 
     def _on_ok(self) -> None:
         if not self.spelling.text().strip() or not self.meaning.text().strip():
@@ -102,3 +137,21 @@ class SenseDialog(QDialog):
             "example_en": self.ex_en.text().strip(),
             "example_ko": self.ex_ko.text().strip(),
         }
+
+
+class AnswerDialog(QDialog):
+    """AI 답변 표시 (읽기 전용)."""
+
+    def __init__(self, parent=None, title: str = "AI 답변", text: str = ""):
+        super().__init__(parent)
+        self.setWindowTitle(title)
+        self.resize(480, 320)
+        view = QTextEdit()
+        view.setReadOnly(True)
+        view.setPlainText(text)
+        close = QPushButton("닫기")
+        close.clicked.connect(self.accept)
+        layout = QVBoxLayout()
+        layout.addWidget(view)
+        layout.addWidget(close)
+        self.setLayout(layout)

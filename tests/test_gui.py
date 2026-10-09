@@ -173,3 +173,33 @@ def test_dialog_accept_code_regression():
     sense = SenseDialog(initial={"meaning_ko": "사과"})
     sense._on_ok()
     assert sense.result() == QDialog.DialogCode.Accepted
+
+
+def test_word_dialog_ai_suggest_fills_from_mock(monkeypatch):
+    """AI 추천 버튼: Mock 제안이 폼에 채워짐 (저장은 확인 버튼)."""
+    import os
+
+    from vocab_note.ui.dialogs import WordDialog
+
+    QApplication.instance() or QApplication([])
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+
+    dlg = WordDialog()
+    dlg.spelling.setText("apple")
+    dlg._on_ai_suggest()
+    assert "apple" in dlg.meaning.text()
+    assert dlg.pos.text() == "noun"
+    assert dlg.ex_en.text() != ""
+
+
+def test_settings_dialog_opens(tmp_path):
+    from vocab_note.ui.settings_dialog import SettingsDialog
+
+    QApplication.instance() or QApplication([])
+    dlg = SettingsDialog()
+    assert "gemini" in [dlg.provider_box.itemText(i)
+                        for i in range(dlg.provider_box.count())]
+    dlg.provider_box.setCurrentText("openai")
+    assert "gpt-4o-mini" in dlg.model_edit.placeholderText()
