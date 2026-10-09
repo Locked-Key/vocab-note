@@ -66,7 +66,7 @@ def test_gemini_complete(fake_http):
     sent, canned = fake_http
     canned["body"] = {"candidates": [{"content": {"parts": [
         {"text": '{"meaning_ko": "사과"}'}]}}]}
-    out = GeminiProvider("KEY", "gemini-2.5-flash").complete("sys", "hi")
+    out = GeminiProvider("KEY", "gemini-3.7-flash").complete("sys", "hi")
     assert json.loads(out)["meaning_ko"] == "사과"
     assert "generateContent" in sent[0].full_url
     assert sent[0].full_url.endswith("key=KEY")
@@ -175,7 +175,7 @@ def test_settings_roundtrip(tmp_path):
     assert (loaded.provider, loaded.effective_model) == ("openai", "gpt-4o")
     assert load_settings(p).is_mock is False
     default = AISettings(provider="gemini")
-    assert default.effective_model == "gemini-2.5-flash"
+    assert default.effective_model == "gemini-3.7-flash"
     assert load_settings(tmp_path / "없음.json").provider == "gemini"
 
 

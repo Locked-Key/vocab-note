@@ -179,7 +179,7 @@ PROVIDERS: dict[str, type[AIProvider]] = {
 }
 
 DEFAULT_MODELS = {
-    "gemini": "gemini-2.5-flash",
+    "gemini": "gemini-3.7-flash",
     "openai": "gpt-4o-mini",
     "anthropic": "claude-3-5-haiku-latest",
 }
