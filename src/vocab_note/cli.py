@@ -115,6 +115,9 @@ def build_parser() -> argparse.ArgumentParser:
     st.add_argument("--wrong", type=int, default=10, help="오답노트 표시 수 (기본: 10)")
     st.add_argument("--recent", type=int, default=10, help="최근 풀이 표시 수 (기본: 10)")
 
+    rv = sub.add_parser("review", help="오답 우선 복습 퀴즈")
+    rv.add_argument("--num", type=int, default=5, help="문제 수 (기본: 5)")
+
     sg = sub.add_parser("suggest", help="AI 추천 (뜻·품사·예문·태그, 저장 안 함)")
     sg.add_argument("spelling", help="영어 철자")
     sg.add_argument("--save", action="store_true", help="제안을 확인 후 저장")
@@ -395,6 +398,44 @@ def main(argv: list[str] | None = None) -> None:
                     n += 1
                 print(f"\n점수: {session.score}/{n - 1} "
                       f"(남은 문제 {session.total - session.index}개)")
+            finally:
+                conn.close()
+        elif args.command == "review":
+            from .quiz_service import QuizError, QuizSession, record_attempt
+            from .review_service import build_review_quiz
+
+            conn = get_connection()
+            try:
+                try:
+                    questions = build_review_quiz(conn, limit=args.num)
+                except QuizError as e:
+                    print(f"복습 불가: {e}")
+                    return
+                session = QuizSession(questions)
+                print(f"[오답 우선 복습 모드] 총 {session.total}문제")
+                n = 1
+                while not session.done:
+                    q = session.current
+                    arrow = "뜻은?" if q.direction == "en_to_ko" else "영어는?"
+                    print(f"\n[{n}/{session.total}] {q.prompt} — {arrow}")
+                    for i, opt in enumerate(q.options, 1):
+                        print(f"  {i}. {opt}")
+                    try:
+                        raw = input(f"번호 (1-{len(q.options)}, q=종료): ").strip()
+                    except EOFError:
+                        print("\n종료")
+                        break
+                    if raw.lower() == "q":
+                        break
+                    if not raw.isdigit() or not 1 <= int(raw) <= len(q.options):
+                        print(f"1~{len(q.options)} 번호를 입력하세요.")
+                        continue
+                    picked = q.options[int(raw) - 1]
+                    correct = session.answer_current(picked)
+                    record_attempt(conn, q.sense_id, q.direction, correct)
+                    print("정답!" if correct else f"오답. 정답: {q.answer}")
+                    n += 1
+                print(f"\n복습 점수: {session.score}/{n - 1}")
             finally:
                 conn.close()
         elif args.command == "stats":

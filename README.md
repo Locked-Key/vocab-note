@@ -1,6 +1,6 @@
 # vocab-note — 영단어 학습 노트
 
-7단계 AI 보조 상태입니다.
+8단계 고급 복습 상태입니다.
 
 ## 구조 (코드/데이터 분리)
 
@@ -71,6 +71,9 @@ python -m vocab_note examples apple --num 3
 python -m vocab_note config --provider gemini --key <키>  # .env에 저장
 python -m vocab_note config --test              # 연결 테스트
 # GUI: 단어 추가 [AI 추천받기], 상단 [AI에게 질문]·[설정]
+
+# 고급 복습 (8단계: 오답 우선 복습 큐)
+python -m vocab_note review --num 5
 
 # 4) 테스트
 pytest -q
@@ -214,3 +217,9 @@ erDiagram
 - [x] API 호출 (`urllib`, 환경 변수, JSON, 업체별 인증·요청·응답 차이 흡수)
 - [x] 프롬프트 설계 (JSON 한 객체로만 답하게 + 코드펜스·잡음 파싱)
 - [x] 비용·오류 처리 (`AIError` 공통 변환, 키 없음 → Mock, 제안-저장 분리)
+
+## 배운 내용 체크 (8단계)
+
+- [x] 알고리즘 기초 (오답 빈도수와 정답률을 복합 산출하는 우선순위 큐 정렬)
+- [x] 서비스 레이어 확장 (`review_service.py`를 통해 기존 퀴즈 서비스 로직 재사용)
+- [x] 적응형 학습 (오답이 없으면 일반 무작위 퀴즈로 우아하게 폴백)

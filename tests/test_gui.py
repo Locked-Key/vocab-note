@@ -175,13 +175,14 @@ def test_dialog_accept_code_regression():
     assert sense.result() == QDialog.DialogCode.Accepted
 
 
-def test_word_dialog_ai_suggest_fills_from_mock(monkeypatch):
+def test_word_dialog_ai_suggest_fills_from_mock(monkeypatch, tmp_path):
     """AI 추천 버튼: Mock 제안이 폼에 채워짐 (저장은 확인 버튼)."""
     import os
 
     from vocab_note.ui.dialogs import WordDialog
 
     QApplication.instance() or QApplication([])
+    monkeypatch.setattr("vocab_note.ai.service.DOTENV_PATH", tmp_path / ".env")
     monkeypatch.delenv("GEMINI_API_KEY", raising=False)
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)

@@ -194,6 +194,8 @@ def test_dotenv_and_key_save(tmp_path, monkeypatch):
 
 def test_get_provider_mock_without_key(monkeypatch, tmp_path):
     monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    # .env 파일 영향 받지 않도록 임시 디렉토리로 DOTENV_PATH 모킹
+    monkeypatch.setattr("vocab_note.ai.service.DOTENV_PATH", tmp_path / ".env")
     s = load_settings(tmp_path / "없음.json")
     provider = get_provider(s)
     assert isinstance(provider, MockProvider) and s.is_mock is True
