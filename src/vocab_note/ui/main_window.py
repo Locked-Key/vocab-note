@@ -10,6 +10,7 @@ from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
     QDialog,
+    QStackedWidget,
     QHBoxLayout,
     QInputDialog,
     QLabel,
@@ -38,7 +39,7 @@ from ..vocab_service import (
     update_sense,
 )
 from .dialogs import SenseDialog, WordDialog
-from .quiz_dialog import QuizDialog
+from .pages import QuizPage, ReviewPage, SettingsPage, StatsPage
 from .theme import apply_theme
 
 ALL_TAGS = "전체 태그"
@@ -138,28 +139,76 @@ class MainWindow(QMainWindow):
         splitter.setStretchFactor(0, 1)
         splitter.setStretchFactor(1, 2)
 
-        # 상단: 퀴즈 + AI + 다크모드 토글
-        self.quiz_btn = QPushButton("퀴즈")
-        self.quiz_btn.clicked.connect(self.open_quiz)
+        # 단어장 페이지 상단: AI 질문 버튼
         self.ai_ask_btn = QPushButton("AI에게 질문")
         self.ai_ask_btn.clicked.connect(self.on_ai_ask)
-        self.settings_btn = QPushButton("설정")
-        self.settings_btn.clicked.connect(self.open_settings)
+        vocab_top = QHBoxLayout()
+        vocab_top.addWidget(QLabel("단어장"))
+        vocab_top.addStretch(1)
+        vocab_top.addWidget(self.ai_ask_btn)
+
+        vocab_layout = QVBoxLayout()
+        vocab_layout.addLayout(vocab_top)
+        vocab_layout.addWidget(splitter, 1)
+        self.vocab_page = QWidget()
+        self.vocab_page.setLayout(vocab_layout)
+
+        # 본문 페이지들 (사이드바로 전환)
+        self.quiz_page = QuizPage(self, self._db_path)
+        self.review_page = ReviewPage(self, self._db_path)
+        self.stats_page = StatsPage(self, self._db_path)
+        self.settings_page = SettingsPage(self)
+
+        self.stack = QStackedWidget()
+        for page in (self.vocab_page, self.quiz_page, self.review_page,
+                     self.stats_page, self.settings_page):
+            self.stack.addWidget(page)
+
+        # 사이드바
+        self.sidebar = QListWidget()
+        self.sidebar.setObjectName("sidebar")
+        self.sidebar.setFixedWidth(160)
+        for icon, label in (("📖", "단어장"), ("📝", "퀴즈"), ("🔁", "복습"),
+                            ("📊", "기록"), ("⚙", "설정")):
+            QListWidgetItem(f"{icon}  {label}", self.sidebar)
+        self.sidebar.setCurrentRow(0)
+        self.sidebar.currentRowChanged.connect(self.on_nav_changed)
+
         self.dark_toggle = QCheckBox("다크 모드")
         self.dark_toggle.toggled.connect(self.on_toggle_dark)
-        top = QHBoxLayout()
-        top.addStretch(1)
-        top.addWidget(self.quiz_btn)
-        top.addWidget(self.ai_ask_btn)
-        top.addWidget(self.settings_btn)
-        top.addWidget(self.dark_toggle)
 
-        root = QVBoxLayout()
-        root.addLayout(top)
-        root.addWidget(splitter, 1)
+        side_layout = QVBoxLayout()
+        side_layout.addWidget(self.sidebar, 1)
+        side_layout.addWidget(self.dark_toggle)
+        side_layout.setContentsMargins(0, 0, 0, 0)
+        side_widget = QWidget()
+        side_widget.setObjectName("sidebarPanel")
+        side_widget.setFixedWidth(160)
+        side_widget.setLayout(side_layout)
+
+        root = QHBoxLayout()
+        root.addWidget(side_widget)
+        root.addWidget(self.stack, 1)
         central = QWidget()
         central.setLayout(root)
         self.setCentralWidget(central)
+
+    def on_nav_changed(self, row: int) -> None:
+        """사이드바 선택 → 본문 페이지 전환 (페이지별 새로고침 포함)."""
+        if row < 0:
+            return
+        self.stack.setCurrentIndex(row)
+        page = self.stack.widget(row)
+        if page is self.vocab_page:
+            self.refresh_all()
+        elif hasattr(page, "reset"):
+            page.reset()
+
+    def go_to_page(self, name: str) -> None:
+        """이름으로 페이지 이동 ('단어장'/'퀴즈'/'복습'/'기록'/'설정')."""
+        order = ["단어장", "퀴즈", "복습", "기록", "설정"]
+        if name in order:
+            self.sidebar.setCurrentRow(order.index(name))
 
     # -- 데이터 접근 (서비스 함수만 사용) -------------------------------
     def _conn(self):
@@ -458,12 +507,12 @@ class MainWindow(QMainWindow):
             apply_theme(app, checked)
 
     def open_quiz(self) -> None:
-        QuizDialog(self, self._db_path).exec()
+        """사이드바의 퀴즈 페이지로 이동."""
+        self.go_to_page("퀴즈")
 
     def open_settings(self) -> None:
-        from .settings_dialog import SettingsDialog
-
-        SettingsDialog(self).exec()
+        """사이드바의 설정 페이지로 이동."""
+        self.go_to_page("설정")
 
     def on_ai_ask(self) -> None:
         from PySide6.QtWidgets import QApplication

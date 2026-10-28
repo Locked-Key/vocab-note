@@ -103,9 +103,59 @@ def _quiz_seed(db_path):
         conn.close()
 
 
-def test_main_window_has_quiz_button(tmp_path):
+def test_sidebar_has_five_menus_and_switches_pages(tmp_path):
     win = _window(tmp_path)
-    assert win.quiz_btn.text() == "퀴즈"
+    labels = [win.sidebar.item(i).text() for i in range(win.sidebar.count())]
+    assert len(labels) == 5
+    for name in ("단어장", "퀴즈", "복습", "기록", "설정"):
+        assert any(name in lab for lab in labels)
+
+    assert win.stack.currentWidget() is win.vocab_page
+    win.go_to_page("퀴즈")
+    assert win.stack.currentWidget() is win.quiz_page
+    assert win.quiz_page.pages.currentIndex() == 0  # 진입 시 설정 화면부터
+    win.go_to_page("복습")
+    assert win.stack.currentWidget() is win.review_page
+    win.go_to_page("기록")
+    assert win.stack.currentWidget() is win.stats_page
+    win.go_to_page("설정")
+    assert win.stack.currentWidget() is win.settings_page
+    win.go_to_page("단어장")
+    assert win.stack.currentWidget() is win.vocab_page
+    # 기존 호환 메서드도 페이지 이동으로 동작
+    win.open_quiz()
+    assert win.stack.currentWidget() is win.quiz_page
+    win.open_settings()
+    assert win.stack.currentWidget() is win.settings_page
+
+
+def test_review_page_shows_queue_and_starts(tmp_path):
+    from vocab_note.db import get_connection
+
+    win = _window(tmp_path)
+    db_path = tmp_path / "gui.db"
+    conn = get_connection(db_path)
+    try:
+        sense_id = conn.execute("SELECT id FROM sense ORDER BY id").fetchone()["id"]
+        conn.execute(
+            "INSERT INTO quiz_attempt (sense_id, direction, is_correct) VALUES (?, 'en_to_ko', 0)",
+            (sense_id,))
+        conn.commit()
+    finally:
+        conn.close()
+    win.go_to_page("복습")
+    assert win.review_page.queue_list.count() == 1
+    assert "오답 1회" in win.review_page.queue_list.item(0).text()
+    assert win.review_page.start(num=1, seed=3) is True
+    assert win.review_page.session.total == 1
+    assert win.review_page.session.current.sense_id == sense_id
+
+
+def test_stats_page_renders(tmp_path):
+    win = _window(tmp_path)
+    win.go_to_page("기록")
+    assert "아직 푼 문제가 없습니다" in win.stats_page.overall_label.text()
+    assert win.stats_page.wrong_list.count() == 1  # "(오답 없음)" 플레이스홀더
 
 
 def test_quiz_dialog_full_flow(tmp_path):

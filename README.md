@@ -49,10 +49,11 @@ python -m vocab_note list --search 사과
 python -m vocab_note list --order recent
 python -m vocab_note untag-word apple 과일
 
-# 데스크톱 UI (4단계 + GUI 퀴즈)
+# 데스크톱 UI (4단계 + 사이드바)
 python -m vocab_note gui
 # 또는 VS Code에서 F5 → "Vocab GUI"
-# 상단 [퀴즈] 버튼: 태그 범위·방향·문제 수 선택 → 객관식 풀이 → 결과
+# 왼쪽 사이드바: 📖단어장 · 📝퀴즈 · 🔁복습 · 📊기록 · ⚙설정 (본문 페이지 전환)
+# 다크 모드 토글은 사이드바 하단
 
 # 퀴즈 (5단계: 객관식, 풀이는 quiz_attempt에 저장)
 python -m vocab_note quiz
@@ -223,3 +224,10 @@ erDiagram
 - [x] 알고리즘 기초 (오답 빈도수와 정답률을 복합 산출하는 우선순위 큐 정렬)
 - [x] 서비스 레이어 확장 (`review_service.py`를 통해 기존 퀴즈 서비스 로직 재사용)
 - [x] 적응형 학습 (오답이 없으면 일반 무작위 퀴즈로 우아하게 폴백)
+
+## 배운 내용 체크 (GUI 다듬기: 사이드바)
+
+- [x] `QStackedWidget`으로 본문 페이지 전환, `QListWidget` 사이드바 + `objectName` 기반 QSS
+- [x] 페이지 재사용: `ReviewPage`가 `QuizPage`를 상속해 출제 함수만 교체
+- [x] 기존 팝업(`QuizDialog`/`SettingsDialog`)은 페이지를 감싸는 얇은 어댑터로 유지 (하위 호환)
+- [x] 페이지 진입 시 `reset()`으로 최신 데이터 새로고침
