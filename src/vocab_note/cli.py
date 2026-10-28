@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import sys
+from pathlib import Path
 
 from . import __version__
 from .config import DB_PATH
@@ -136,6 +137,12 @@ def build_parser() -> argparse.ArgumentParser:
     cf.add_argument("--model", help="모델명 (비우면 업체 기본값)")
     cf.add_argument("--key", help="API 키 (.env에 저장, 화면에 표시 안 함)")
     cf.add_argument("--test", action="store_true", help="연결 테스트")
+
+    bk = sub.add_parser("backup", help="데이터 백업 (data/backups/)")
+    rs = sub.add_parser("restore", help="백업에서 복원")
+    rs.add_argument("file", help="백업 zip 파일 경로")
+    rs.add_argument("--yes", action="store_true", help="확인 없이 복원")
+    sub.add_parser("backups", help="백업 목록")
     return p
 
 
@@ -574,6 +581,40 @@ def main(argv: list[str] | None = None) -> None:
                     print(get_provider(s).test_connection())
                 except Exception as e:
                     print(f"연결 실패: {e}")
+        elif args.command == "backup":
+            from .backup_service import create_backup
+
+            try:
+                path = create_backup()
+                print(f"백업 완료: {path}")
+            except Exception as e:
+                print(f"백업 실패: {e}")
+        elif args.command == "restore":
+            from .backup_service import BackupError, restore_backup
+
+            p = Path(args.file)
+            if not args.yes:
+                try:
+                    ok = input(f"{p.name}에서 복원하겠습니까? 현재 DB는 .db.bak으로 백업됩니다. (y/N) ")
+                except EOFError:
+                    ok = "n"
+                if ok.strip().lower() != "y":
+                    print("취소")
+                    return
+            try:
+                restore_backup(p)
+                print("복원 완료")
+            except BackupError as e:
+                print(f"복원 실패: {e}")
+        elif args.command == "backups":
+            from .backup_service import list_backups
+
+            files = list_backups()
+            if not files:
+                print("(백업 없음)")
+                return
+            for fpath, name, size in files:
+                print(f"{size:>8}  {name}")
     except (VocabError, WordNotFoundError, SenseNotFoundError, TagError) as e:
         print(f"오류: {e}")
 

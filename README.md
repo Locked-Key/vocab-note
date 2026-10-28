@@ -1,6 +1,6 @@
 # vocab-note — 영단어 학습 노트
 
-8단계 고급 복습 상태입니다.
+9단계 완성·배포 상태입니다.
 
 ## 구조 (코드/데이터 분리)
 
@@ -73,8 +73,17 @@ python -m vocab_note config --provider gemini --key <키>  # .env에 저장
 python -m vocab_note config --test              # 연결 테스트
 # GUI: 단어 추가 [AI 추천받기], 상단 [AI에게 질문]·[설정]
 
-# 고급 복습 (8단계: 오답 우선 복습 큐)
-python -m vocab_note review --num 5
+# 배포 (9단계)
+python -m vocab_note backup              # data/backups/에 zip 저장
+python -m vocab_note backups             # 백업 목록
+python -m vocab_note restore <파일>      # 지정된 zip에서 복원
+# GUI: 설정 페이지 → 데이터 섹션에서 백업·복원
+
+# 실행 파일 빌드 (PyInstaller)
+pip install pyinstaller
+pyinstaller vocab-note.spec
+dist\vocab-note.exe init
+dist\vocab-note.exe gui
 
 # 4) 테스트
 pytest -q

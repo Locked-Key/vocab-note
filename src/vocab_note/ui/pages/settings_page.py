@@ -8,6 +8,7 @@ import os
 from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
+    QFileDialog,
     QFormLayout,
     QHBoxLayout,
     QLabel,
@@ -89,6 +90,27 @@ class SettingsPage(QWidget):
 
         layout.addWidget(appearance_heading)
         layout.addWidget(self.dark_check)
+        layout.addSpacing(16)
+
+        # 데이터 관리
+        data_heading = QLabel("데이터")
+        font3 = data_heading.font()
+        font3.setPointSize(14)
+        font3.setBold(True)
+        data_heading.setFont(font3)
+        layout.addWidget(data_heading)
+
+        btn_row = QHBoxLayout()
+        backup_btn = QPushButton("백업")
+        backup_btn.setToolTip("data/backups/에 zip 저장")
+        backup_btn.clicked.connect(self._on_backup)
+        restore_btn = QPushButton("복원")
+        restore_btn.setToolTip("백업 zip 파일을 선택해 복원")
+        restore_btn.clicked.connect(self._on_restore)
+        btn_row.addWidget(backup_btn)
+        btn_row.addWidget(restore_btn)
+        btn_row.addStretch(1)
+        layout.addLayout(btn_row)
         layout.addStretch(1)
         self.setLayout(layout)
         self._refresh_model_placeholder()
@@ -160,3 +182,34 @@ class SettingsPage(QWidget):
                 # 입력 키는 테스트 후 환경에서 제거 (.env 저장은 [저장] 버튼으로만)
                 os.environ.pop(KEY_ENV_VARS[s.provider], None)
                 load_dotenv()
+
+    # -- 데이터 백업/복원 ---------------------------------------------------
+    def _on_backup(self) -> None:
+        from ...backup_service import create_backup
+
+        try:
+            path = create_backup()
+            QMessageBox.information(self, "백업 완료", f"{path.name} 저장됨")
+        except Exception as e:
+            QMessageBox.warning(self, "백업 실패", str(e))
+
+    def _on_restore(self) -> None:
+        from pathlib import Path
+
+        from ...backup_service import BackupError, restore_backup
+
+        file_path, _ = QFileDialog.getOpenFileName(
+            self, "백업 파일 선택", "",
+            "ZIP 파일 (*.zip);;모든 파일 (*.*)")
+        if not file_path:
+            return
+        ans = QMessageBox.question(
+            self, "복원 확인",
+            "현재 DB는 .db.bak으로 먼저 백업됩니다.\n그래도 복원하겠습니까?")
+        if ans != QMessageBox.Yes:
+            return
+        try:
+            restore_backup(Path(file_path))
+            QMessageBox.information(self, "복원 완료", "DB와 설정을 복원했습니다.")
+        except BackupError as e:
+            QMessageBox.warning(self, "복원 실패", str(e))
