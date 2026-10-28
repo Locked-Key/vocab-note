@@ -24,3 +24,6 @@ Thumbs.db
 dist/
 build/
 *.spec
+
+# OpenCode 도구 설정 (프로젝트와 무관)
+opencode.json
