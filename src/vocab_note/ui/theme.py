@@ -19,7 +19,7 @@ QListWidget#sidebar {
     background-color: #232323; border: none; border-right: 1px solid #3a3a3a;
     font-size: 15px; color: #e6e6e6;
 }
-QListWidget#sidebar::item { padding: 10px 8px; border-radius: 6px; margin: 2px 6px; }
+QListWidget#sidebar::item { padding: 8px 4px; border-radius: 6px; margin: 2px 2px; }
 QListWidget#sidebar::item:hover { background-color: #333333; }
 QListWidget#sidebar::item:selected { background-color: #4a6fa5; color: white; }
 QPushButton#sidebarToggle {
@@ -47,7 +47,7 @@ QListWidget#sidebar {
     background-color: #f0f2f5; border: none; border-right: 1px solid #d8dbe0;
     font-size: 15px; color: #1a1a1a;
 }
-QListWidget#sidebar::item { padding: 10px 8px; border-radius: 6px; margin: 2px 6px; }
+QListWidget#sidebar::item { padding: 8px 4px; border-radius: 6px; margin: 2px 2px; }
 QListWidget#sidebar::item:hover { background-color: #e2e6ec; }
 QListWidget#sidebar::item:selected { background-color: #4a6fa5; color: white; }
 QPushButton#sidebarToggle {
