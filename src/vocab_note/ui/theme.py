@@ -30,14 +30,16 @@ QPushButton#sidebarToggle:hover { color: #e6e6e6; }
 """
 
 LIGHT_QSS = """
-QWidget { font-size: 14px; }
+QWidget { background-color: #f5f5f5; color: #1a1a1a; font-size: 14px; }
 QLineEdit, QComboBox, QListWidget, QTextEdit, QSpinBox {
-    border: 1px solid #bbb; border-radius: 4px; padding: 4px;
+    background-color: #ffffff; border: 1px solid #bbb; border-radius: 4px; padding: 4px;
 }
 QPushButton {
-    border: 1px solid #999; border-radius: 4px; padding: 6px 12px;
+    background-color: #e8e8e8; border: 1px solid #999; border-radius: 4px; padding: 6px 12px;
 }
+QPushButton:hover { background-color: #dcdcdc; }
 QPushButton:checked { background-color: #cfe3ff; border-color: #4a6fa5; }
+QSplitter::handle { background-color: #ccc; }
 
 /* 사이드바 */
 QWidget#sidebarPanel { background-color: #f0f2f5; }

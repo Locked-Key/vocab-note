@@ -67,9 +67,12 @@ def test_dark_toggle_changes_stylesheet(tmp_path):
     app = QApplication.instance()
     apply_theme(app, dark=False)
     light = app.styleSheet()
-    win.dark_toggle.setChecked(True)
+    win.settings_page.dark_check.setChecked(True)
     assert app.styleSheet() != light
     assert win._dark is True
+    win.settings_page.dark_check.setChecked(False)
+    assert app.styleSheet() == light
+    assert win._dark is False
 
 
 def test_ui_has_no_sql():
@@ -166,12 +169,19 @@ def test_sidebar_collapse_to_icons(tmp_path):
     win._on_toggle_sidebar()
     assert win.side_widget.width() == 48
     assert win.toggle_btn.text() == "▶"
-    assert win.dark_toggle.text() == "🌗"
     assert win.sidebar.item(0).text() == "📖"
     assert win.sidebar.currentRow() == win.stack.currentIndex()  # 선택 유지
     win._on_toggle_sidebar()
     assert win.side_widget.width() == 160
     assert win.toggle_btn.text() == "◀"
+
+    # 다크 모드는 설정 페이지에서 토글
+    win.go_to_page("설정")
+    assert win.settings_page.dark_check.isChecked() is False
+    win.settings_page.dark_check.setChecked(True)
+    app = QApplication.instance()
+    assert app.styleSheet() != ""
+    assert win._dark is True
 
 
 def test_quiz_dialog_full_flow(tmp_path):

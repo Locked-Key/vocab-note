@@ -6,6 +6,7 @@
 import os
 
 from PySide6.QtWidgets import (
+    QCheckBox,
     QComboBox,
     QFormLayout,
     QHBoxLayout,
@@ -76,6 +77,18 @@ class SettingsPage(QWidget):
         layout.addLayout(form)
         layout.addWidget(self.test_result)
         layout.addLayout(row)
+        layout.addSpacing(16)
+
+        # 화면 설정
+        appearance_heading = QLabel("화면")
+        font2 = appearance_heading.font()
+        font2.setPointSize(14)
+        font2.setBold(True)
+        appearance_heading.setFont(font2)
+        self.dark_check = QCheckBox("다크 모드")
+
+        layout.addWidget(appearance_heading)
+        layout.addWidget(self.dark_check)
         layout.addStretch(1)
         self.setLayout(layout)
         self._refresh_model_placeholder()
@@ -90,6 +103,7 @@ class SettingsPage(QWidget):
         self.test_result.setText("")
         self._refresh_model_placeholder()
         self._refresh_key_status()
+        # dark_check 동기화는 MainWindow.set_dark_mode에서 처리
 
     def _refresh_model_placeholder(self) -> None:
         provider = self.provider_box.currentText()

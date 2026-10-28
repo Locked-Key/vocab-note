@@ -158,6 +158,8 @@ class MainWindow(QMainWindow):
         self.review_page = ReviewPage(self, self._db_path)
         self.stats_page = StatsPage(self, self._db_path)
         self.settings_page = SettingsPage(self)
+        self.settings_page.dark_check.setChecked(self._dark)
+        self.settings_page.dark_check.toggled.connect(self.set_dark_mode)
 
         self.stack = QStackedWidget()
         for page in (self.vocab_page, self.quiz_page, self.review_page,
@@ -179,13 +181,9 @@ class MainWindow(QMainWindow):
         self.toggle_btn.setFixedHeight(32)
         self.toggle_btn.clicked.connect(self._on_toggle_sidebar)
 
-        self.dark_toggle = QCheckBox("다크 모드")
-        self.dark_toggle.toggled.connect(self.on_toggle_dark)
-
         side_layout = QVBoxLayout()
         side_layout.addWidget(self.toggle_btn)
         side_layout.addWidget(self.sidebar, 1)
-        side_layout.addWidget(self.dark_toggle)
         side_layout.setContentsMargins(0, 0, 0, 0)
         self.side_widget = QWidget()
         self.side_widget.setObjectName("sidebarPanel")
@@ -205,12 +203,10 @@ class MainWindow(QMainWindow):
             self.side_widget.setFixedWidth(48)
             self._set_sidebar_items(expanded=False)
             self.toggle_btn.setText("▶")
-            self.dark_toggle.setText("🌗")
         else:
             self.side_widget.setFixedWidth(160)
             self._set_sidebar_items(expanded=True)
             self.toggle_btn.setText("◀")
-            self.dark_toggle.setText("다크 모드")
         # 선택은 유지
         self.sidebar.setCurrentRow(self.stack.currentIndex())
 
@@ -532,11 +528,11 @@ class MainWindow(QMainWindow):
             conn.close()
         self.refresh_all()
 
-    def on_toggle_dark(self, checked: bool) -> None:
-        self._dark = checked
+    def set_dark_mode(self, dark: bool) -> None:
+        self._dark = dark
         app = QApplication.instance()
         if app is not None:
-            apply_theme(app, checked)
+            apply_theme(app, dark)
 
     def open_quiz(self) -> None:
         """사이드바의 퀴즈 페이지로 이동."""
