@@ -17,11 +17,16 @@ QSplitter::handle { background-color: #555; }
 QWidget#sidebarPanel { background-color: #232323; }
 QListWidget#sidebar {
     background-color: #232323; border: none; border-right: 1px solid #3a3a3a;
-    font-size: 15px;
+    font-size: 15px; color: #e6e6e6;
 }
-QListWidget#sidebar::item { padding: 12px 10px; border-radius: 6px; margin: 2px 6px; }
+QListWidget#sidebar::item { padding: 10px 8px; border-radius: 6px; margin: 2px 6px; }
 QListWidget#sidebar::item:hover { background-color: #333333; }
 QListWidget#sidebar::item:selected { background-color: #4a6fa5; color: white; }
+QPushButton#sidebarToggle {
+    background: transparent; border: none; font-size: 14px; color: #aaa;
+    padding: 6px; margin: 4px;
+}
+QPushButton#sidebarToggle:hover { color: #e6e6e6; }
 """
 
 LIGHT_QSS = """
@@ -38,11 +43,16 @@ QPushButton:checked { background-color: #cfe3ff; border-color: #4a6fa5; }
 QWidget#sidebarPanel { background-color: #f0f2f5; }
 QListWidget#sidebar {
     background-color: #f0f2f5; border: none; border-right: 1px solid #d8dbe0;
-    font-size: 15px;
+    font-size: 15px; color: #1a1a1a;
 }
-QListWidget#sidebar::item { padding: 12px 10px; border-radius: 6px; margin: 2px 6px; }
+QListWidget#sidebar::item { padding: 10px 8px; border-radius: 6px; margin: 2px 6px; }
 QListWidget#sidebar::item:hover { background-color: #e2e6ec; }
 QListWidget#sidebar::item:selected { background-color: #4a6fa5; color: white; }
+QPushButton#sidebarToggle {
+    background: transparent; border: none; font-size: 14px; color: #888;
+    padding: 6px; margin: 4px;
+}
+QPushButton#sidebarToggle:hover { color: #333; }
 """
 
 

@@ -158,6 +158,22 @@ def test_stats_page_renders(tmp_path):
     assert win.stats_page.wrong_list.count() == 1  # "(오답 없음)" 플레이스홀더
 
 
+def test_sidebar_collapse_to_icons(tmp_path):
+    win = _window(tmp_path)
+    assert win.side_widget.width() == 160
+    assert win.toggle_btn.text() == "◀"
+    assert "단어장" in win.sidebar.item(0).text()
+    win._on_toggle_sidebar()
+    assert win.side_widget.width() == 48
+    assert win.toggle_btn.text() == "▶"
+    assert win.dark_toggle.text() == "🌗"
+    assert win.sidebar.item(0).text() == "📖"
+    assert win.sidebar.currentRow() == win.stack.currentIndex()  # 선택 유지
+    win._on_toggle_sidebar()
+    assert win.side_widget.width() == 160
+    assert win.toggle_btn.text() == "◀"
+
+
 def test_quiz_dialog_full_flow(tmp_path):
     from vocab_note.db import get_connection
     from vocab_note.ui.quiz_dialog import QuizDialog

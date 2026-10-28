@@ -165,33 +165,65 @@ class MainWindow(QMainWindow):
             self.stack.addWidget(page)
 
         # 사이드바
+        self._menu_items = [("📖", "단어장"), ("📝", "퀴즈"), ("🔁", "복습"),
+                            ("📊", "기록"), ("⚙", "설정")]
+        self._sidebar_collapsed = False
         self.sidebar = QListWidget()
         self.sidebar.setObjectName("sidebar")
-        self.sidebar.setFixedWidth(160)
-        for icon, label in (("📖", "단어장"), ("📝", "퀴즈"), ("🔁", "복습"),
-                            ("📊", "기록"), ("⚙", "설정")):
-            QListWidgetItem(f"{icon}  {label}", self.sidebar)
+        self._set_sidebar_items(expanded=True)
         self.sidebar.setCurrentRow(0)
         self.sidebar.currentRowChanged.connect(self.on_nav_changed)
+
+        self.toggle_btn = QPushButton("◀")
+        self.toggle_btn.setObjectName("sidebarToggle")
+        self.toggle_btn.setFixedHeight(32)
+        self.toggle_btn.clicked.connect(self._on_toggle_sidebar)
 
         self.dark_toggle = QCheckBox("다크 모드")
         self.dark_toggle.toggled.connect(self.on_toggle_dark)
 
         side_layout = QVBoxLayout()
+        side_layout.addWidget(self.toggle_btn)
         side_layout.addWidget(self.sidebar, 1)
         side_layout.addWidget(self.dark_toggle)
         side_layout.setContentsMargins(0, 0, 0, 0)
-        side_widget = QWidget()
-        side_widget.setObjectName("sidebarPanel")
-        side_widget.setFixedWidth(160)
-        side_widget.setLayout(side_layout)
+        self.side_widget = QWidget()
+        self.side_widget.setObjectName("sidebarPanel")
+        self.side_widget.setFixedWidth(160)
+        self.side_widget.setLayout(side_layout)
 
         root = QHBoxLayout()
-        root.addWidget(side_widget)
+        root.addWidget(self.side_widget)
         root.addWidget(self.stack, 1)
         central = QWidget()
         central.setLayout(root)
         self.setCentralWidget(central)
+
+    def _on_toggle_sidebar(self) -> None:
+        self._sidebar_collapsed = not self._sidebar_collapsed
+        if self._sidebar_collapsed:
+            self.side_widget.setFixedWidth(48)
+            self._set_sidebar_items(expanded=False)
+            self.toggle_btn.setText("▶")
+            self.dark_toggle.setText("🌗")
+        else:
+            self.side_widget.setFixedWidth(160)
+            self._set_sidebar_items(expanded=True)
+            self.toggle_btn.setText("◀")
+            self.dark_toggle.setText("다크 모드")
+        # 선택은 유지
+        self.sidebar.setCurrentRow(self.stack.currentIndex())
+
+    def _set_sidebar_items(self, expanded: bool) -> None:
+        self.sidebar.blockSignals(True)
+        row = self.sidebar.currentRow()
+        self.sidebar.clear()
+        for icon, label in self._menu_items:
+            text = f"{icon}  {label}" if expanded else icon
+            QListWidgetItem(text, self.sidebar)
+        self.sidebar.blockSignals(False)
+        if 0 <= row < self.sidebar.count():
+            self.sidebar.setCurrentRow(row)
 
     def on_nav_changed(self, row: int) -> None:
         """사이드바 선택 → 본문 페이지 전환 (페이지별 새로고침 포함)."""
