@@ -190,10 +190,21 @@ def _format_word_line(w) -> str:
         for s in w.senses
     ) or "(뜻 없음)"
     tags = f" #{' #'.join(t.name for t in w.tags)}" if w.tags else ""
-    return f"[{w.id}] {w.spelling} — {meanings}{tags}"
+    return f"[{w.id}] {w.spelling} - {meanings}{tags}"
 
 
 def main(argv: list[str] | None = None) -> None:
+    # 인자 없이 더블클릭 실행 시 GUI 자동 실행
+    if argv is None:
+        argv = sys.argv[1:] if len(sys.argv) > 1 else []
+    if not argv:
+        try:
+            from .ui.app import run
+            raise SystemExit(run())
+        except ImportError:
+            print("GUI를 실행하려면 PySide6가 필요합니다.")
+            print("CLI 사용법: vocab-note --help")
+            return
     args = build_parser().parse_args(argv)
     try:
         if args.command == "init":
