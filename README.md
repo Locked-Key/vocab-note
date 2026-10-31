@@ -89,7 +89,7 @@ dist\vocab-note.exe gui
 pytest -q
 ```
 
-## 명령어 레퍼런스 (전체 17개)
+## 명령어 레퍼런스 (전체 24개)
 
 실행 전: `.\.venv\Scripts\Activate.ps1` / 명령별 도움말: `python -m vocab_note <명령> --help`
 
@@ -123,8 +123,27 @@ python -m vocab_note quiz --tag 과일 --direction en_to_ko --num 10
 python -m vocab_note stats --days 7 --wrong 10 --recent 10
 
 # 데스크톱 UI + 기타
-python -m vocab_note gui        # 목록/상세/퀴즈/다크모드 (VS Code F5 → "Vocab GUI")
+python -m vocab_note gui        # 목록/상세/퀴즈/복습/기록/설정 (사이드바 ◀ 접기)
 python -m vocab_note --version
+
+# 데이터 백업·복원
+python -m vocab_note backup              # data/backups/에 zip 저장
+python -m vocab_note backups             # 백업 목록
+python -m vocab_note restore <파일> --yes  # 지정된 zip에서 복원
+```
+
+## 실행 파일 빌드 (PyInstaller)
+
+```powershell
+pip install pyinstaller
+pyinstaller --clean vocab-note.spec
+dist\vocab-note.exe          # 더블클릭 → GUI, 인자 주면 CLI
+dist\vocab-note.exe init     # 최초 1회 (exe 옆 data/ 생성)
+```
+
+- **개발**: `data/vocab.db`는 프로젝트 루트 아래
+- **exe 배포**: `data/vocab.db`·`.env`는 exe 옆에 자동 생성 (USB 이동 가능)
+- **GUI 설정 페이지**에서 DB·.env 경로 확인 및 데이터 폴더 열기 가능
 ```
 
 ## 데이터베이스 구조 (`data/vocab.db`, SQLite)
@@ -240,3 +259,10 @@ erDiagram
 - [x] 페이지 재사용: `ReviewPage`가 `QuizPage`를 상속해 출제 함수만 교체
 - [x] 기존 팝업(`QuizDialog`/`SettingsDialog`)은 페이지를 감싸는 얇은 어댑터로 유지 (하위 호환)
 - [x] 페이지 진입 시 `reset()`으로 최신 데이터 새로고침
+
+## 배운 내용 체크 (9단계)
+
+- [x] PyInstaller (`SPECPATH`, frozen 감지, launcher.py로 진입)
+- [x] DB 마이그레이션과 앱 설정 분리 (`config.py` frozen/dev 분기)
+- [x] zipfile 백업/복원 (`shutil.copyfileobj`, 복원 전 `.db.bak` 자동 생성)
+- [x] 릴리스 관리 (exe 단독 배포, 데이터는 exe 옆에 귀속)
