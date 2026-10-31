@@ -13,7 +13,7 @@ import sqlite3
 from dataclasses import dataclass
 from pathlib import Path
 
-from ..config import BASE_DIR, DATA_DIR
+from ..config import BASE_DIR, DATA_DIR, ENV_PATH, SETTINGS_PATH
 from ..tag_service import get_word_tags
 from ..vocab_service import get_word
 from .providers import (
@@ -25,8 +25,7 @@ from .providers import (
     Suggestion,
 )
 
-DOTENV_PATH = BASE_DIR / ".env"
-SETTINGS_PATH = DATA_DIR / "settings.json"
+DOTENV_PATH = ENV_PATH
 
 
 @dataclass

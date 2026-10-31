@@ -111,10 +111,27 @@ class SettingsPage(QWidget):
         btn_row.addWidget(restore_btn)
         btn_row.addStretch(1)
         layout.addLayout(btn_row)
+
+        # 파일 경로 표시
+        layout.addSpacing(8)
+        self.db_path_label = QLabel()
+        self.db_path_label.setWordWrap(True)
+        self.env_path_label = QLabel()
+        self.env_path_label.setWordWrap(True)
+        open_btn = QPushButton("데이터 폴더 열기")
+        open_btn.clicked.connect(self._on_open_data_folder)
+        path_row = QHBoxLayout()
+        path_row.addWidget(open_btn)
+        path_row.addStretch(1)
+        layout.addWidget(self.db_path_label)
+        layout.addWidget(self.env_path_label)
+        layout.addLayout(path_row)
+
         layout.addStretch(1)
         self.setLayout(layout)
         self._refresh_model_placeholder()
         self._refresh_key_status()
+        self._refresh_path_labels()
 
     # -- 상태 표시 ---------------------------------------------------------
     def reset(self) -> None:
@@ -125,6 +142,7 @@ class SettingsPage(QWidget):
         self.test_result.setText("")
         self._refresh_model_placeholder()
         self._refresh_key_status()
+        self._refresh_path_labels()
         # dark_check 동기화는 MainWindow.set_dark_mode에서 처리
 
     def _refresh_model_placeholder(self) -> None:
@@ -139,6 +157,24 @@ class SettingsPage(QWidget):
             self.key_status.setText(f"있음 ({masked})")
         else:
             self.key_status.setText("없음 — 키가 없으면 Mock으로 동작합니다")
+
+    def _refresh_path_labels(self) -> None:
+        from ...config import DATA_DIR, ENV_PATH
+
+        self.db_path_label.setText(f"DB: {DATA_DIR / 'vocab.db'}")
+        if ENV_PATH.exists():
+            self.env_path_label.setText(f".env: {ENV_PATH} (키 저장됨)")
+        else:
+            self.env_path_label.setText(
+                f".env 미존재 — 키 저장 시 {ENV_PATH}에 생성됩니다")
+
+    def _on_open_data_folder(self) -> None:
+        import os
+        import subprocess
+        from ...config import DATA_DIR
+
+        os.makedirs(str(DATA_DIR), exist_ok=True)
+        subprocess.Popen(["explorer", str(DATA_DIR)])
 
     def _on_provider_changed(self) -> None:
         self.model_edit.clear()
